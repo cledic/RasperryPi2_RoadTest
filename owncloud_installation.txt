@@ -1,0 +1,148 @@
+# http://www.techjawab.com/2014/08/how-to-setup-owncloud-7-on-raspberry-pi.html
+
+sudo apt-get -y install nginx 
+sudo apt-get -y install openssl 
+sudo apt-get -y install ssl-cert 
+sudo apt-get -y install php5-cli 
+sudo apt-get -y install php5-sqlite 
+sudo apt-get -y install php5-gd 
+sudo apt-get -y install php5-common 
+sudo apt-get -y install php5-cgi 
+sudo apt-get -y install sqlite3 
+sudo apt-get -y install php-pear 
+sudo apt-get -y install php-apc 
+sudo apt-get -y install curl 
+sudo apt-get -y install libapr1 
+sudo apt-get -y install libtool 
+sudo apt-get -y install libcurl4-openssl-dev 
+sudo apt-get -y install php-xml-parser 
+sudo apt-get -y install php5 
+sudo apt-get -y install php5-dev 
+sudo apt-get -y install php5-gd 
+sudo apt-get -y install php5-fpm 
+sudo apt-get -y install memcached 
+sudo apt-get -y install php5-memcache 
+sudo apt-get -y install varnish
+
+sudo apt-get --purge remove php5-curl
+sudo openssl req $@ -new -x509 -days 730 -nodes -out /etc/nginx/cert.pem -keyout /etc/nginx/cert.key
+
+sudo chmod 600 /etc/nginx/cert.pem
+sudo chmod 600 /etc/nginx/cert.key
+
+
+sudo vi /etc/nginx/sites-available/default
+# Copy and replace the entire content below:
+
+upstream php-handler {
+	server 127.0.0.1:9000;
+	#server unix:/var/run/php5-fpm.sock;
+}
+ 
+server {
+	listen 80;
+	server_name 192.168.1.72;
+	return 301 https://$server_name$request_uri; # enforce https
+}
+ 
+server {
+	listen 443 ssl;
+	server_name 192.168.1.72;
+	 
+	ssl_certificate /etc/nginx/cert.pem;
+	ssl_certificate_key /etc/nginx/cert.key;
+	 
+	# Path to the root of your installation
+	root /var/www/owncloud;
+	 
+	client_max_body_size 1000M; # set max upload size
+	fastcgi_buffers 64 4K;
+	 
+	rewrite ^/caldav(.*)$ /remote.php/caldav$1 redirect;
+	rewrite ^/carddav(.*)$ /remote.php/carddav$1 redirect;
+	rewrite ^/webdav(.*)$ /remote.php/webdav$1 redirect;
+	 
+	index index.php;
+	error_page 403 /core/templates/403.php;
+	error_page 404 /core/templates/404.php;
+	 
+	location = /robots.txt {
+		allow all;
+		log_not_found off;
+		access_log off;
+	}
+	 
+	location ~ ^/(?:\.htaccess|data|config|db_structure\.xml|README) {
+	deny all;
+	}
+ 
+	location / {
+		# The following 2 rules are only needed with webfinger
+		rewrite ^/.well-known/host-meta /public.php?service=host-meta last;
+		rewrite ^/.well-known/host-meta.json /public.php?service=host-meta-json last;
+		 
+		rewrite ^/.well-known/carddav /remote.php/carddav/ redirect;
+		rewrite ^/.well-known/caldav /remote.php/caldav/ redirect;
+		 
+		rewrite ^(/core/doc/[^\/]+/)$ $1/index.html;
+		 
+		try_files $uri $uri/ index.php;
+	}
+ 
+	location ~ \.php(?:$|/) {
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_param PATH_INFO $fastcgi_path_info;
+		fastcgi_param HTTPS on;
+		fastcgi_pass php-handler;
+	}
+ 
+	# Optional: set long EXPIRES header on static assets
+	location ~* \.(?:jpg|jpeg|gif|bmp|ico|png|css|js|swf)$ {
+		expires 30d;
+		# Optional: Don't log access to assets
+		access_log off;
+	}
+ 
+} 
+
+
+sudo vi /etc/php5/fpm/php.ini
+# search below lines and update:
+upload_max_filesize = 200M
+post_max_size = 200M
+
+sudo vi /etc/php5/fpm/pool.d/www.conf
+# Change the following line from:
+listen = /var/run/php5-fpm.sock 
+# to
+listen = 127.0.0.1:9000
+
+sudo vi /etc/dphys-swapfile
+# Change the following line from:
+CONF_SWAPSIZE=100
+# to 
+CONF_SWAPSIZE=512
+
+sudo /etc/init.d/php5-fpm restart
+sudo /etc/init.d/nginx restart
+
+sudo mkdir -p /var/www/owncloud
+sudo wget https://download.owncloud.org/community/owncloud-7.0.1.tar.bz2
+sudo tar xvf owncloud-7.0.1.tar.bz2
+
+sudo mv owncloud/ /var/www/
+sudo chown -R www-data:www-data /var/www
+rm -rf owncloud owncloud-7.0.1.tar.bz2
+
+sudo usermod -a -G pi www-data
+
+# point the browser to the Raspberry 
+# setup administrator...
+
+admin
+<yourpassword>
+
+user_name
+<user_name_password>
