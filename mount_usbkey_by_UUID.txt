@@ -1,0 +1,21 @@
+# http://www.raspberrypi.org/forums/viewtopic.php?f=36&t=17607
+# How to use an USB key, 
+# 1. discover the UUID to uniquely identify the driver. I listed two method:
+pi@raspberrypi ~ $ sudo ls -l /dev/disk/by-uuid/
+total 0
+lrwxrwxrwx 1 root root 15 Mar 21 18:38 140A-14B7 -> ../../mmcblk0p1
+lrwxrwxrwx 1 root root 15 Mar 21 18:38 f24a4949-f4b2-4cad-a780-a138695079ec -> ../../mmcblk0p2
+lrwxrwxrwx 1 root root 10 Jan  1  1970 FB30-474C -> ../../sda1
+
+pi@raspberrypi ~ $ sudo blkid
+/dev/mmcblk0p1: SEC_TYPE="msdos" LABEL="boot" UUID="140A-14B7" TYPE="vfat"
+/dev/mmcblk0p2: UUID="f24a4949-f4b2-4cad-a780-a138695079ec" TYPE="ext4"
+/dev/sda1: UUID="FB30-474C" TYPE="vfat"
+
+# 2. then, edit with your preferred editor, the /etc/fstba file, adding as below:
+pi@raspberrypi ~ $ cat /etc/fstab
+proc            /proc           proc    defaults          0       0
+/dev/mmcblk0p1  /boot           vfat    defaults          0       2
+/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
+UUID=FB30-474C /media/usbkey vfat uid=1000,gid=1000,umask=007 0 0
+# a swapfile is not a swap partition, so no using swapon|off from here on, use  dphys-swapfile swap[on|off]  for that
