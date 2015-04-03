@@ -1,0 +1,20 @@
+# http://www.raspberrypi.org/forums/viewtopic.php?f=33&t=98354
+
+For gcc 4.8 I use
+gcc-4.8 -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+
+This gave me the best code and was the only option that enabled sdiv/udiv.
+To get gcc 4.8 just do
+sudo apt-get install gcc-4.8
+
+For gcc 4.6 (the default compiler on rasbian)
+gcc -march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard
+
+For a Pi 1 (B+)
+gcc -mcpu=arm1176jzf-s -mfpu=vfp -mfloat-abi=hard
+
+Hope this helps.
+
+
+by gregeric » Fri Feb 06, 2015 5:33 pm
+And when compiling large projects on the Pi2, use "make -j 4" to take advantage of the extra cores
