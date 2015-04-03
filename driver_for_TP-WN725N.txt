@@ -1,0 +1,10 @@
+# TP-LINK TP-WN725N
+# http://www.raspberrypi.org/forums/viewtopic.php?p=462982#p462982
+# For Raspy Pi 2 scroll down the web page...
+#
+# Use the command uname -a to find the version of Linux
+#
+# Linux raspberrypi 3.18.7-v7+ #755 SMP PREEMPT Thu Feb 12 17:20:48 GMT 2015 armv7l GNU/Linux
+wget https://dl.dropboxusercontent.com/u/80256631/8188eu-v7-20150212.tar.gz
+tar -xzf 8188eu-v7-20150212.tar.gz
+./install.h
